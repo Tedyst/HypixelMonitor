@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hypixelmonitor
+  namespace: tedy
+  labels:
+    app: hypixelmonitor
+    keel.sh/policy: force
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hypixelmonitor
+  template:
+    metadata:
+      labels:
+        app: hypixelmonitor
+    spec:
+      terminationGracePeriodSeconds: 0
+      containers:
+        - name: hypixelmonitor
+          imagePullPolicy: Always
+          resources:
+            limits:
+              cpu: "1000m"
+              memory: "400M"
+            requests:
+              cpu: "200m"
+              memory: "200M"
+          image: tedyst/hypixel-monitor
+          ports:
+            - containerPort: 8000
+          env:
+            - name: HYPIXEL_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: hypixelapikey
+                  name: hypixelmonitor
+            - name: PLAYERS
+              value: "1c57e151112f4da4a229ade98a4f0c0b,bd9c825f1de84755ba4e22eaaf851608"
+      nodeSelector:
+        kubernetes.io/os: linux
+        kubernetes.io/arch: arm
