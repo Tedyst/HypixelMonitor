@@ -3,9 +3,6 @@ import time
 import requests
 import HypixelMonitor.config as config
 
-
-# https://api.hypixel.net/player?key=&name=Tedyst
-
 HYPIXEL_EXP = Gauge('hypixel_exp', 'Network EXP', ["name"])
 SKYWARS_SOULS = Gauge('hypixel_skywars_souls', 'SkyWars Souls', ["name"])
 SKYWARS_WIN_STREAK = Gauge('hypixel_skywars_win_streak',
