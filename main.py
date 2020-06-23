@@ -3,48 +3,70 @@ import time
 import requests
 import HypixelMonitor.config as config
 
-HYPIXEL_EXP = Gauge('hypixel_exp', 'Network EXP', ["name"])
-SKYWARS_SOULS = Gauge('hypixel_skywars_souls', 'SkyWars Souls', ["name"])
-SKYWARS_WIN_STREAK = Gauge('hypixel_skywars_win_streak',
-                           'SkyWars Win Streak', ["name"])
-BEDWARS_EXP = Gauge('hypixel_bedwars_exp', 'BedWars EXP', ["name"])
-BEDWARS_WIN_STREAK = Gauge('hypixel_bedwars_win_streak',
-                           'BedWars Win Streak', ["name"])
-BEDWARS_COINS = Gauge('hypixel_bedwars_coins', 'BedWars Coins', ["name"])
-KARMA = Gauge('hypixel_karma', 'Karma', ["name"])
+
+PROMETHEUS_VARS = {}
 
 
-def getUser(uuid):
+def init_prometheus(uuid):
+    player_json = get_user(uuid)
+    prometheus_dict = parse_player_json(player_json)
+
+    # Init PROMETHEUS_VARS with gauges for every player
+    for key, _ in prometheus_dict.items():
+        # Ignore keywords
+        ok = True
+        for string in config.IGNORED_STRINGS:
+            if string in key:
+                ok = False
+        if ok:
+            PROMETHEUS_VARS[key] = Gauge(key, key, ["name"])
+
+
+def parse_player_json(json):
+    result = {}
+    for gamemode in config.GAMEMODES:
+        result.update(dict_to_prometheus(
+            gamemode, json["player"]["stats"][gamemode]))
+    return result
+
+
+def dict_to_prometheus(gamemode, stats):
+    result = {}
+    for key, val in stats.items():
+        key_txt = key.replace(' ', '_').replace('-', '_')
+
+        if type(val) == int:
+            result[gamemode + "_" + key_txt] = val
+    return result
+
+
+def get_user(uuid):
     params = {
         "key": config.HYPIXEL_API_KEY,
         "uuid": uuid
     }
     r = requests.get("https://api.hypixel.net/player", params=params)
     result = r.json()
-    name = result["player"]["displayname"]
-
-    xp = result["player"]["networkExp"]
-    HYPIXEL_EXP.labels(name).set(xp)
-
-    skywars_souls = result["player"]["stats"]["SkyWars"]["souls"]
-    SKYWARS_SOULS.labels(name).set(skywars_souls)
-    skywars_win_streak = result["player"]["stats"]["SkyWars"]["win_streak"]
-    SKYWARS_WIN_STREAK.labels(name).set(skywars_win_streak)
-    bedwars_exp = result["player"]["stats"]["Bedwars"]["Experience"]
-    BEDWARS_EXP.labels(name).set(bedwars_exp)
-    bedwars_win_streak = result["player"]["stats"]["Bedwars"]["winstreak"]
-    BEDWARS_WIN_STREAK.labels(name).set(bedwars_win_streak)
-    bedwars_coins = result["player"]["stats"]["Bedwars"]["coins"]
-    BEDWARS_COINS.labels(name).set(bedwars_coins)
-    karma = result["player"]["karma"]
-    KARMA.labels(name).set(karma)
+    return result
 
 
 if __name__ == '__main__':
     start_http_server(8000)
     print("Started logging")
+    if len(config.PLAYERS) == 0:
+        print("No players to search!")
+        exit(0)
+    init_prometheus(config.PLAYERS[0])
     while True:
         for user in config.PLAYERS:
-            getUser(user)
+            player_json = get_user(user)
             print("Got user data for", user)
+            stats = parse_player_json(player_json)
+            name = player_json["player"]["displayname"]
+
+            for key, val in stats.items():
+                if key not in PROMETHEUS_VARS:
+                    continue
+                PROMETHEUS_VARS[key].labels(name).set(val)
+
         time.sleep(config.TIMEOUT)
