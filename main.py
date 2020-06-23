@@ -12,7 +12,7 @@ def init_prometheus(uuid):
     prometheus_dict = parse_player_json(player_json)
 
     for key in config.FORCED_STATS:
-        PROMETHEUS_VARS[key] = Gauge(key, key, ["name"])
+        PROMETHEUS_VARS[key] = Gauge("hypixel_" + key, key, ["name"])
 
     # Init PROMETHEUS_VARS with gauges for every player
     for key, _ in prometheus_dict.items():
