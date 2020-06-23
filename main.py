@@ -11,6 +11,9 @@ def init_prometheus(uuid):
     player_json = get_user(uuid)
     prometheus_dict = parse_player_json(player_json)
 
+    for key in config.FORCED_STATS:
+        PROMETHEUS_VARS[key] = Gauge(key, key, ["name"])
+
     # Init PROMETHEUS_VARS with gauges for every player
     for key, _ in prometheus_dict.items():
         # Ignore keywords
@@ -69,4 +72,7 @@ if __name__ == '__main__':
                     continue
                 PROMETHEUS_VARS[key].labels(name).set(val)
 
+            for key in config.FORCED_STATS:
+                PROMETHEUS_VARS[key].labels(name).set(
+                    player_json["player"][key])
         time.sleep(config.TIMEOUT)
