@@ -22,7 +22,7 @@ def init_prometheus(uuid):
             if string in key:
                 ok = False
         if ok:
-            PROMETHEUS_VARS[key] = Gauge(key, key, ["name"])
+            PROMETHEUS_VARS[key] = Gauge("hypixel_" + key, key, ["name"])
 
 
 def parse_player_json(json):
