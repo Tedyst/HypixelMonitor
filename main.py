@@ -8,6 +8,11 @@ PROMETHEUS_VARS = {}
 
 
 def init_prometheus(uuid):
+    """
+    Create all keys that would be added to prometheus
+    Needs a uuid to get his statistics
+    Stores in PROMETHEUS_VARS for easy access
+    """
     player_json = get_user(uuid)
     prometheus_dict = parse_player_json(player_json)
 
@@ -26,6 +31,10 @@ def init_prometheus(uuid):
 
 
 def parse_player_json(json):
+    """
+    Convert json from api to dict that has all keys
+    that should be added to Prometheus
+    """
     result = {}
     for gamemode in config.GAMEMODES:
         result.update(dict_to_prometheus(
@@ -34,6 +43,10 @@ def parse_player_json(json):
 
 
 def dict_to_prometheus(gamemode, stats):
+    """
+    Convert json from api to dict that has all keys for a specific gamemode
+    that should be added to Prometheus
+    """
     result = {}
     for key, val in stats.items():
         key_txt = key.replace(' ', '_').replace('-', '_')
@@ -44,6 +57,9 @@ def dict_to_prometheus(gamemode, stats):
 
 
 def get_user(uuid):
+    """
+    Retrieve json with player's statistics from hypixel api
+    """
     params = {
         "key": config.HYPIXEL_API_KEY,
         "uuid": uuid
