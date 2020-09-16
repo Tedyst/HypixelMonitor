@@ -27,7 +27,7 @@ spec:
             requests:
               cpu: "200m"
               memory: "200M"
-          image: tedyst/hypixel-monitor
+          image: ghcr.io/tedyst/hypixelmonitor
           ports:
             - containerPort: 8000
           env:
