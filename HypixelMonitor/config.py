@@ -53,3 +53,6 @@ IGNORED_STRINGS = [
     "openedEpics",
     "ultimate"
 ]
+
+SKYBLOCK_PROFILES = (os.getenv("SKYBLOCK_PROFILES")
+                     or "737984c653a944df8a71c049618c92b6").split(',')

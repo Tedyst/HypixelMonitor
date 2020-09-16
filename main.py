@@ -2,9 +2,20 @@ from prometheus_client import start_http_server, Gauge
 import time
 import requests
 import HypixelMonitor.config as config
-
+import HypixelMonitor.skyblock as skyblock
 
 PROMETHEUS_VARS = {}
+UUID_CACHE = {}
+
+
+def get_name(uuid):
+    if uuid in UUID_CACHE:
+        return UUID_CACHE[uuid]
+    r = requests.get(
+        "https://playerdb.co/api/player/minecraft/" + uuid)
+    result = r.json()
+    UUID_CACHE[uuid] = result["data"]["player"]["username"]
+    return UUID_CACHE[uuid]
 
 
 def init_prometheus(uuid):
@@ -18,6 +29,14 @@ def init_prometheus(uuid):
 
     for key in config.FORCED_STATS:
         PROMETHEUS_VARS[key] = Gauge("hypixel_" + key, key, ["name"])
+
+    if len(config.SKYBLOCK_PROFILES) > 0:
+        skyblock_dict = skyblock.prometheus(config.SKYBLOCK_PROFILES[0])
+        for uuid, user in skyblock_dict["users"].items():
+            for prop, _ in user.items():
+                key = "hypixel_skyblock_" + prop
+                PROMETHEUS_VARS[key] = Gauge(key, key, ["name", "profile"])
+            break
 
     # Init PROMETHEUS_VARS with gauges for every player
     for key, _ in prometheus_dict.items():
@@ -82,6 +101,7 @@ if __name__ == '__main__':
             print("Got user data for", user)
             stats = parse_player_json(player_json)
             name = player_json["player"]["displayname"]
+            UUID_CACHE[user] = name
 
             for key, val in stats.items():
                 if key not in PROMETHEUS_VARS:
@@ -91,4 +111,11 @@ if __name__ == '__main__':
             for key in config.FORCED_STATS:
                 PROMETHEUS_VARS[key].labels(name).set(
                     player_json["player"][key])
+        for profile in config.SKYBLOCK_PROFILES:
+            skyblock_dict = skyblock.prometheus(profile)
+            for uuid, user in skyblock_dict["users"].items():
+                for prop, val in user.items():
+                    key = "hypixel_skyblock_" + prop
+                    PROMETHEUS_VARS[key].labels(
+                        get_name(uuid), profile).set(val)
         time.sleep(config.TIMEOUT)
