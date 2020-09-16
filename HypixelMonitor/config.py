@@ -56,3 +56,8 @@ IGNORED_STRINGS = [
 
 SKYBLOCK_PROFILES = (os.getenv("SKYBLOCK_PROFILES")
                      or "737984c653a944df8a71c049618c92b6").split(',')
+
+# Yes i hate him that much
+SKYBLOCK_IGNORED_PLAYERS = [
+    "6967bbe9883f45b093e6f2e0175450eb"
+]

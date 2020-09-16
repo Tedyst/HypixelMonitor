@@ -14,6 +14,8 @@ def prometheus(profile):
         "users": {}
     }
     for uuid, user in profile_data["profile"]["members"].items():
+        if uuid in config.SKYBLOCK_IGNORED_PLAYERS:
+            continue
         result["users"][uuid] = {
             "balance": profile_data["profile"]["banking"]["balance"],
         }
